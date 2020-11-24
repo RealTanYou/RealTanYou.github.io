@@ -10,6 +10,8 @@ var startx; //to check on mouse move
 var starty;
 var selectedpiecex = -1, selectedpiecey = -1,selectedpiececolor = "";
 
+var currentplayer = "white";
+
 let tile_size = 100;
 let tile_color = 'rgba(255,255,255,0.5)'; //white
 let white = 'rgba(255,255,255,0.5)', black = 'rgba(0,0,0,0.5)';
@@ -48,9 +50,6 @@ function ispiececlicked(x,y,piece){
 }
 
 function getpiececlicked(event){
-  /**
-   * note that in a browser, x is vertical, y is horizontal. I filp this to the standard for chess.
-   */
   console.log("get piece");
   event.preventDefault();
   startx = event.clientX;
@@ -61,6 +60,7 @@ function getpiececlicked(event){
       //console.log(cb.board[j][i].name);
       if(ispiececlicked(startx,starty,cb.board[j][i])){
         console.log("clicked piece: " + cb.board[j][i].name);
+        if(cb.board[j][i].colour != currentplayer) return;
         selectedpiecex = i;
         selectedpiecey = j;
         selectedpiececolor = cb.board[j][i].colour;
@@ -71,7 +71,7 @@ function getpiececlicked(event){
 }
 
 function movepiece(event){
-  if(selectedpiecey< 0){
+  if(selectedpiecey< 0 || selectedpiececolor != currentplayer){
     return;
   }
   event.preventDefault();
@@ -91,7 +91,7 @@ function releasepiece(event){ //for mouse up
   console.log("release piece");
   /**
    * lock the piece into the grid location. update cb.board and cb.white and/or black
-   * ensure that there isn't it's own piece there, nor it is jumping over obstacles.
+   * ensure that there isn't it's own piece there, nor it is jumping over obstacles, except knight
    */
   
   //check if there is a piece in the same location as where it will be released. if it is the same colour, return to its original location.
@@ -202,12 +202,20 @@ function releasepiece(event){ //for mouse up
   selectedpiecey = -1;
   selectedpiecex = -1;
   selectedpiececolor = "";
+  if(currentplayer == "white"){
+    currentplayer = "black";
+    cb.blackenpassant = "";
+  }
+  else{
+    currentplayer = "white";
+    cb.whiteenpassant = "";
+  }
   draw();
   cb.print_board();
 }
 
 function returnpiecetoOriginal(event){ //if the piece moves out of the canvas, return the piece to its original location.
-  if(selectedpiecey< 0){
+  if(selectedpiecey< 0 || selectedpiececolor != currentplayer){
     return;
   }
   event.preventDefault();

@@ -33,11 +33,15 @@ class piece {
         this.drawnx = x * tile_size;
         this.drawny = y * tile_size;
         this.colour = colour; //only black or white
-        this.image = new Image(); //for visual representation of the piece'
-        this.image.src = image;
-        this.image.onload = function(){
-            ctx.drawImage(this,this.drawnx + 25,this.drawny + 50);
-        };
+        this.imagepiece = new Image(); //for visual representation of the piece'
+        this.imagepiece.src = image;
+        this.imagepiece.drawnx = x * tile_size;
+        this.imagepiece.drawny = y * tile_size;
+        this.imagepiece.onload = drawthispiece;
+        //this.imagepiece.onmousedown = drawthispiece;
+        //this.imagepiece.onmouseleave = drawthispiece;
+        //this.imagepiece.onmouseup = drawthispiece;
+        //this.imagepiece.onmousemove = drawthispiece;
         this.name = name; //rook, bishop etc
         this.width = 0; //width and height for hitbox.
         this.height = 0;
@@ -56,13 +60,19 @@ class piece {
         //this.width = ctx.measureText(this.name).width;
         //this.height = 30;
         //ctx.fillText(this.name,this.drawnx + 25,this.drawny + 50);
-        console.log(this.image.src);
-        //ctx.drawImage(this.image,this.drawnx + 25,this.drawny + 50);
+        //console.log(this.imagepiece.src);
+        this.imagepiece.drawnx = this.drawnx;
+        this.imagepiece.drawny = this.drawny;
+        ctx.drawImage(this.imagepiece,this.drawnx,this.drawny,100,100);
     }
     toString(){
         //var newtext = Text()
         return this.name;
     }
+}
+
+function drawthispiece(){
+    ctx.drawImage(this,this.drawnx,this.drawny,100,100);
 }
 
 class king extends piece {
