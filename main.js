@@ -212,7 +212,9 @@ function releasepiece(event){ //for mouse up
   }
   draw();
   cb.print_board();
-  //cb.bestmove("B");
+  if(currentplayer == "black"){
+    cb.bestmove("B");
+  }
 }
 
 function returnpiecetoOriginal(event){ //if the piece moves out of the canvas, return the piece to its original location.

@@ -402,14 +402,14 @@ class chessboard {
                     currentstate[j].push(0);
                 }
                 else{
-                    console.log(this.board[j][i].name);
+                    //console.log(this.board[j][i].name);
                     currentstate[j].push(this.board[j][i].name);
                     totalscore += this.piecescore[this.board[j][i].name];
                 }
             }
             //console.log(currentstate);
         }
-        //console.table(currentstate);
+        console.table(currentstate);
         //console.log(totalscore);
         var movelist = this.simulatemoves(currentstate,playercolor,totalscore);
         console.log(movelist);
@@ -438,17 +438,19 @@ class chessboard {
                 //got player color piece, find all possible legal moves with that piece and calculate the score of both black and white.
                 //console.table(currentstate);
                 //console.log(currentstate[j][i]);
-                console.table(move_list);
+                console.log(currentstate[j][i]);
+                //console.table(move_list[0]);
+                //console.table(move_list[1]);
                 var minj, maxj, mini, maxi, tempj, tempi; //maximum     
                 switch(currentstate[j][i].charAt(1)){
                     case "G": //king
                         console.log("hit king");
                         minj = j - 1 > 0 ? j-1 : 0;
-                        maxj =  j + 1 < 8 ? j + 1 : 8;
+                        maxj =  j + 1 < 8 ? j + 1 : 7;
                         mini = i - 1 > 0 ? i-1 : 0;
-                        maxi =  i + 1 < 8 ? i + 1 : 8;
-                        for(tempj = minj; tempj < maxj; tempj++){
-                            for(tempi = mini; tempi < max_y; tempi++){
+                        maxi =  i + 1 < 8 ? i + 1 : 7;
+                        for(tempj = minj; tempj <= maxj; tempj++){
+                            for(tempi = mini; tempi <= maxi; tempi++){
                                 if(tempj == j && tempi == i) continue;
                                 //check if piece at location. if not, is valid move.
                                 if(currentstate[tempj][tempi] == 0){
@@ -476,32 +478,34 @@ class chessboard {
                         var canmovefurther = [];
                         //generaate each move around the queen.
                         minj = j - 1 > 0 ? j-1 : 0;
-                        maxj =  j + 1 < 8 ? j + 1 : 8;
+                        maxj =  j + 1 < 8 ? j + 1 : 7;
                         mini = i - 1 > 0 ? i-1 : 0;
-                        maxi =  i + 1 < 8 ? i + 1 : 8;
-                        for(tempj = minj; tempj < maxj; tempj++){
-                            for(tempi = mini; tempi < maxi; tempi++){
+                        maxi =  i + 1 < 8 ? i + 1 : 7;
+                        console.log(minj,mini,maxj,maxi);
+                        for(tempj = minj; tempj <= maxj; tempj++){
+                            for(tempi = mini; tempi <= maxi; tempi++){
                                 if(tempj == j && tempi == i) continue;
                                 queenmovelist.push([tempj,tempi])
                                 canmovefurther.push(true);
                             }
                         }
                         console.log(queenmovelist);
+                        console.log(canmovefurther);
                         while(canmovefurther.includes(true)){
                             //so long as the queen can move further, check each direction
-                            for(var qm = 0; qm < 8; qm++){
+                            for(var qm = 0; qm < queenmovelist.length; qm++){
                                 if(!canmovefurther[qm]) continue;
                                 if(currentstate[queenmovelist[qm][0]][queenmovelist[qm][1]] == 0){
                                     //no one at spot, so possible move.
                                     move_list[0].push(this.createstate(currentstate,[j,i],[queenmovelist[qm][0],queenmovelist[qm][1]]));
                                     move_list[1].push(totalscore);
                                     //move one step further in that direction either vertial, horizontal or diagonal.
-                                    if(queenmovelist[qm][0] > j) queenmovelist[qm][0] -= 1;
-                                    else if (queenmovelist[qm][0] < j) queenmovelist[qm][0] += 1;
+                                    if(queenmovelist[qm][0] > j) queenmovelist[qm][0] += 1;
+                                    else if (queenmovelist[qm][0] < j) queenmovelist[qm][0] -= 1;
                                     if(queenmovelist[qm][1] > i) queenmovelist[qm][1] += 1;
                                     else if (queenmovelist[qm][1] < i) queenmovelist[qm][1] -= 1;
                                     //if exceeed boundaries, stop
-                                    if(queenmovelist[qm][0] > 7 || queenmovelist[qm][0] < 0 || queenmovelist[qm][1] > 7 || queenmovelist[qm][1] < 0) canmovefurther = false;
+                                    if(queenmovelist[qm][0] > 7 || queenmovelist[qm][0] < 0 || queenmovelist[qm][1] > 7 || queenmovelist[qm][1] < 0) canmovefurther[qm] = false;
 
                                 }
                                 else if (currentstate[queenmovelist[qm][0]][queenmovelist[qm][1]].charAt(0) == playercolor){
@@ -520,36 +524,36 @@ class chessboard {
                     case "R": //Rook
                         var rookmovelist = [];
                         var canmovefurther = [];
-                        //generaate each move around the queen.
+                        //generaate each move around the rook.
                         minj = j - 1 > 0 ? j-1 : 0;
-                        maxj =  j + 1 < 8 ? j + 1 : 8;
+                        maxj =  j + 1 < 8 ? j + 1 : 7;
                         mini = i - 1 > 0 ? i-1 : 0;
-                        maxi =  i + 1 < 8 ? i + 1 : 8;
-                        for(tempj = minj; tempj < maxj; tempj++){
+                        maxi =  i + 1 < 8 ? i + 1 : 7;
+                        for(tempj = minj; tempj <= maxj; tempj++){
                             if(tempj == j) continue;
                             rookmovelist.push([tempj,i])
                             canmovefurther.push(true);
                         }
-                        for(tempi = mini; tempi < maxi; tempi++){
+                        for(tempi = mini; tempi <= maxi; tempi++){
                             if(tempi == i) continue;
                             rookmovelist.push([j,tempi])
                             canmovefurther.push(true);
                         }
                         while(canmovefurther.includes(true)){
                             //so long as the queen can move further, check each direction
-                            for(var qm = 0; qm < 8; qm++){
+                            for(var qm = 0; qm < rookmovelist.length; qm++){
                                 if(!canmovefurther[qm]) continue;
                                 if(currentstate[rookmovelist[qm][0]][rookmovelist[qm][1]] == 0){
                                     //no one at spot, so possible move.
                                     move_list[0].push(this.createstate(currentstate,[j,i],[rookmovelist[qm][0],rookmovelist[qm][1]]));
                                     move_list[1].push(totalscore);
                                     //move one step further in that direction either vertial, horizontal or diagonal.
-                                    if(rookmovelist[qm][0] > j) rookmovelist[qm][0] -= 1;
-                                    else if (rookmovelist[qm][0] < j) rookmovelist[qm][0] += 1;
+                                    if(rookmovelist[qm][0] > j) rookmovelist[qm][0] += 1;
+                                    else if (rookmovelist[qm][0] < j) rookmovelist[qm][0] -= 1;
                                     if(rookmovelist[qm][1] > i) rookmovelist[qm][1] += 1;
                                     else if (rookmovelist[qm][1] < i) rookmovelist[qm][1] -= 1;
                                     //if exceeed boundaries, stop
-                                    if(rookmovelist[qm][0] > 7 || rookmovelist[qm][0] < 0 || rookmovelist[qm][1] > 7 || rookmovelist[qm][1] < 0) canmovefurther = false;
+                                    if(rookmovelist[qm][0] > 7 || rookmovelist[qm][0] < 0 || rookmovelist[qm][1] > 7 || rookmovelist[qm][1] < 0) canmovefurther[qm] = false;
 
                                 }
                                 else if (currentstate[rookmovelist[qm][0]][rookmovelist[qm][1]].charAt(0) == playercolor){
@@ -568,13 +572,13 @@ class chessboard {
                     case "B": //Bishop
                         var Bishopmovelist = [];
                         var canmovefurther = [];
-                        //generaate each move around the queen.
+                        //generaate each move around the bishop.
                         minj = j - 1 > 0 ? j-1 : 0;
-                        maxj =  j + 1 < 8 ? j + 1 : 8;
+                        maxj =  j + 1 < 8 ? j + 1 : 7;
                         mini = i - 1 > 0 ? i-1 : 0;
-                        maxi =  i + 1 < 8 ? i + 1 : 8;
-                        for(tempj = minj; tempj < maxj; tempj++){
-                            for(tempi = mini; tempi < maxi; tempi++){
+                        maxi =  i + 1 < 8 ? i + 1 : 7;
+                        for(tempj = minj; tempj <= maxj; tempj++){
+                            for(tempi = mini; tempi <= maxi; tempi++){
                                 if(tempj == j || tempi == i) continue;
                                 Bishopmovelist.push([tempj,tempi])
                                 canmovefurther.push(true);
@@ -582,19 +586,19 @@ class chessboard {
                         }
                         while(canmovefurther.includes(true)){
                             //so long as the queen can move further, check each direction
-                            for(var qm = 0; qm < 8; qm++){
+                            for(var qm = 0; qm < Bishopmovelist.length; qm++){
                                 if(!canmovefurther[qm]) continue;
                                 if(currentstate[Bishopmovelist[qm][0]][Bishopmovelist[qm][1]] == 0){
                                     //no one at spot, so possible move.
                                     move_list[0].push(this.createstate(currentstate,[j,i],[Bishopmovelist[qm][0],Bishopmovelist[qm][1]]));
                                     move_list[1].push(totalscore);
                                     //move one step further in that direction either vertial, horizontal or diagonal.
-                                    if(Bishopmovelist[qm][0] > j) Bishopmovelist[qm][0] -= 1;
-                                    else if (Bishopmovelist[qm][0] < j) Bishopmovelist[qm][0] += 1;
+                                    if(Bishopmovelist[qm][0] > j) Bishopmovelist[qm][0] += 1;
+                                    else if (Bishopmovelist[qm][0] < j) Bishopmovelist[qm][0] -= 1;
                                     if(Bishopmovelist[qm][1] > i) Bishopmovelist[qm][1] += 1;
                                     else if (Bishopmovelist[qm][1] < i) Bishopmovelist[qm][1] -= 1;
                                     //if exceeed boundaries, stop
-                                    if(Bishopmovelist[qm][0] > 7 || Bishopmovelist[qm][0] < 0 || Bishopmovelist[qm][1] > 7 || Bishopmovelist[qm][1] < 0) canmovefurther = false;
+                                    if(Bishopmovelist[qm][0] > 7 || Bishopmovelist[qm][0] < 0 || Bishopmovelist[qm][1] > 7 || Bishopmovelist[qm][1] < 0) canmovefurther[qm] = false;
 
                                 }
                                 else if (currentstate[Bishopmovelist[qm][0]][Bishopmovelist[qm][1]].charAt(0) == playercolor){
@@ -613,31 +617,34 @@ class chessboard {
                     case "K": //knight
                         var knightmovelist = [];
                         minj = j - 2 > 0 ? j-2 : 0;
-                        maxj =  j + 2 < 8 ? j + 1 : 8;
+                        maxj =  j + 2 < 8 ? j + 2 : 7;
                         mini = i - 2 > 0 ? i-2 : 0;
-                        maxi =  i + 2 < 8 ? i + 2 : 8;
+                        maxi =  i + 2 < 8 ? i + 2 : 7;
+                        console.log(minj,mini,maxj,maxi);
                         var diffj, diffi;
-                        for(tempj = minj; tempj < maxj; tempj++){
-                            for(tempi = mini; tempi < maxi; tempi++){
+                        for(tempj = minj; tempj <= maxj; tempj++){
+                            for(tempi = mini; tempi <= maxi; tempi++){
                                 if(tempj == j && tempi == i) continue;
                                 diffj = Math.abs(tempj - j);
-                                diffi = Math.abs(tempi - i);
+                                diffi = Math.abs(tempi - i)
+                                //console.log(diffj);
                                 if((diffj == 2 && diffi == 1) || (diffj == 1 && diffi == 2))knightmovelist.push([tempj,tempi])
                             }
                         }
-                        knightmovelist.forEach(function(value,index,arr){
-                            if(currentstate[value[0]][value[1]] == 0){
+                        //console.log(knightmovelist);
+                        for(var kn = 0; kn < knightmovelist.length; kn++){
+                            if(currentstate[knightmovelist[kn][0]][knightmovelist[kn][1]] == 0){
                                 //no one at spot, so possible move.
-                                move_list[0].push(this.createstate(currentstate,[j,i],value));
+                                move_list[0].push(this.createstate(currentstate,[j,i],knightmovelist[kn]));
                                 move_list[1].push(totalscore);
 
                             }
-                            else if (currentstate[Bishopmovelist[qm][0]][Bishopmovelist[qm][1]].charAt(0) != playercolor){
+                            else if (currentstate[knightmovelist[kn][0]][knightmovelist[kn][1]].charAt(0) != playercolor){
                                 //other player piece. take it and stop moving further.
-                                move_list[1].push(totalscore - this.piecescore[currentstate[value[0]][value[1]]]);
-                                move_list[0].push(this.createstate(currentstate,[j,i],value));
+                                move_list[1].push(totalscore - this.piecescore[currentstate[knightmovelist[kn][0]][knightmovelist[kn][1]]]);
+                                move_list[0].push(this.createstate(currentstate,[j,i],knightmovelist[kn]));
                             }
-                        })
+                        }
                         break;
                     case "P": //Pawn
                         //check if pawn at initial position. if it is, allow movement of up to 2, otherwise movement of one only.
@@ -660,7 +667,7 @@ class chessboard {
                                 minj = 2;
                             }
                             else{
-                                maxj = minj = j + 1 < 8 ? j + 1: 8; 
+                                maxj = minj = j + 1 < 8 ? j + 1: 7; 
                             }
                         }
                         //check a few things:
@@ -710,7 +717,7 @@ class chessboard {
 
                                 }
                                 else if(currentstate[j+1][i+1].charAt(0) == "W"){
-                                    move_list[1].push(totalscore - this.piecescore[currentstate[j+1][i-1]]);
+                                    move_list[1].push(totalscore - this.piecescore[currentstate[j+1][i+1]]);
                                     move_list[0].push(this.createstate(currentstate,[j,i],[j+1,i+1]));
                                 }
                             }
@@ -732,7 +739,7 @@ class chessboard {
      * @param {*} newposition y and x coordinates of the new position of the piece. values given likes this: [3.1]
      */
     createstate(currentstate,oldposition, newposition){
-        var newstate = [...currentstate];
+        var newstate = JSON.parse(JSON.stringify(currentstate));
         newstate[newposition[0]][newposition[1]] = newstate[oldposition[0]][oldposition[1]];
         newstate[oldposition[0]][oldposition[1]] = 0;
         return newstate;
