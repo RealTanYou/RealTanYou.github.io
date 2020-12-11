@@ -52,7 +52,7 @@ class piece {
     }
     get_pos(){
         //should return in proper chess format
-        return this.y+1 + "," + num_to_let[this.x];
+        return this.y + "," + this.x;
     }
     show(){
         //ctx.font = "30px Arial";
@@ -235,6 +235,53 @@ class pawn extends piece {
     }
 }
 
+//tree data structure for figuring out moves
+class node{
+    constructor(movelist,score,playercolor,parent=null){
+        this.score = score; //current score of board
+        this.movelist = movelist; //all possible moves from the board. May be empty if there are no further moves from this move
+        this.playercolor = playercolor; //the current playercolor of this node/
+        this.effectivescore = score; //this is the actual effect score of this move, after checking all of the children.
+        this.children = []; //these children correspond to each of the move list and its total score.
+        this.parent = parent; //
+    }
+    add(index){
+        this.children.push(new node([this.movelist[index]],thus.move_list[index][2],this))
+    }
+    //find the bext score and the move to make, by traversing down each node to check the score. note that the lower the score, the better it is for black.
+    dftraverse(){ //callback is a function to be used when you either reached the last node, or exhaust all the previous 
+        (function recurse(currentnode,alpha,beta){
+            //apply aplha beta pruning here.
+            /**
+             * alpha for white, beta for black
+             */
+
+            if(!currentnode) return;
+            var effscore = currentnode.score;
+            //console.log(currentnode.playercolor + "," + currentnode.effectivescore);
+            for(var i = 0; i < currentnode.children.length; i++){
+                recurse(currentnode.children[i],alpha,beta);
+                //onsole.log(currentnode.children[i].playercolor + " " + currentnode.children[i].effectivescore);
+                if(currentnode.playercolor == "W"){ //maximiser
+                    //get higher score;
+                    effscore = Math.max(effscore, currentnode.children[i].effectivescore);
+                    alpha = Math.max(alpha,effscore);
+                    if(alpha >= beta) break;
+                }
+                else{ //minimiser
+                    //get lower score;
+                    effscore = Math.min(effscore, currentnode.children[i].effectivescore);
+                    beta = Math.min(beta,effscore);
+                    if(beta <= alpha) break;
+                }
+                //add code to get score here.
+            }
+            currentnode.effectivescore = effscore;
+            //console.log(currentnode.playercolor + "," + currentnode.effectivescore);
+        })(this,Number.MIN_SAFE_INTEGER,Number.MAX_SAFE_INTEGER);
+    }
+}
+
 class chessboard {
     /**
      * This holds the players and the board position. It is also the AI. Currently. it can only be the black player.
@@ -385,6 +432,29 @@ class chessboard {
             }
         }
     }
+    addnode(currentnode,currentplayer,numsteps,currentstep=1){ //use the move list of the node to add new node
+        //make new child nodes and add them to current node
+        //console.log(currentnode);
+        //console.log(currentnode.movelist);
+        var newplayer;
+        if(currentplayer == 'B'){
+            newplayer = 'W';
+        }
+        else{
+            newplayer = 'B';
+        }
+        for(var i = 0; i < currentnode.movelist[0].length; i++){
+            currentnode.children.push(new node(null,currentnode.movelist[1][i],newplayer,currentnode));
+        }
+        if(currentstep < numsteps){ //more moves to check and make, so recursively make new move lists.
+            for(var i = 0; i < currentnode.children.length; i++){
+                currentnode.children[i].movelist = this.simulatemoves(currentnode.movelist[0][i],newplayer,currentnode.children[i].score);
+                this.addnode(currentnode.children[i],newplayer,numsteps,currentstep+1);
+            }
+        }
+    }
+
+
     /**
      * Find the next best move.
      * @param {*} playercolor The current playercolor. 'W' for white, 'B' for black
@@ -413,7 +483,70 @@ class chessboard {
         //console.log(totalscore);
         var movelist = this.simulatemoves(currentstate,playercolor,totalscore);
         console.log(movelist);
+        //make parent and add node, then recursive add all child nodes, and their moves..
+        var rootplayer = 'B';
+        var rootnode = new node(movelist,totalscore,rootplayer);
+        this.addnode(rootnode,rootplayer,numsteps);
 
+        //after adding all nodes, find the move with the best score and execute that move.
+        rootnode.dftraverse();
+        //root node should have best score; find first move with that score and execute that.
+        console.log(rootnode);
+        for(var k = 0; k < rootnode.children.length; k++){
+            if(rootnode.children[k].effectivescore == rootnode.effectivescore){
+                //found it. change white, black and board states.
+                //step 1: compare current state to this move, and find different pieces, black and/or white.
+                var blackpieceoriginalpos = null, blackpiecenewpos = null;
+                var whitepieceremoved = null;
+                //compare states
+                for(var j = 0; j < currentstate.length; j++){
+                    for(var i = 0; i < currentstate[j].length; i++){
+                        //console.log("checking stuff");
+                        //console.log(currentstate[j][i]);
+                        //console.log(rootnode.movelist[0][k][j][i]);
+                        if(typeof currentstate[j][i] != 'number' && typeof rootnode.movelist[0][k][j][i] == 'number'){
+                            //the piece has moved/removed: record the original position
+                            //if it is white, it may have been removed due to empassant.
+                            if(currentstate[j][i].charAt(0) == "W"){
+                                //white piece has been removed
+                                whitepieceremoved = j + "," + i;
+                            }
+                            else{
+                                //this black piece is moved; record position
+                                blackpieceoriginalpos = j + "," + i;
+                            }
+
+                        }
+                        else if(typeof currentstate[j][i] == 'number' && typeof rootnode.movelist[0][k][j][i] != 'number'){
+                            //the black piece has moved to this position: record the new position
+                            blackpiecenewpos = j + "," + i;
+                        }
+                        else if(typeof currentstate[j][i] != 'number' && typeof rootnode.movelist[0][k][j][i] != 'number' && currentstate[j][i] != rootnode.movelist[0][k][j][i]){
+                            //first, check if both pieces are different.
+                            //if they are different, record them; black took a white piece
+                            blackpiecenewpos = j + "," + i;
+                            whitepieceremoved = j + "," + i;
+                        }
+                    }
+                }
+
+                //step 2: delete the piece in black and/or white memory, followed by board memory and move the piece.
+                if(whitepieceremoved){
+                    delete cb.white[whitepieceremoved];
+                    cb.board[parseInt(whitepieceremoved.charAt(0))][parseInt(whitepieceremoved.charAt(2))] = 0;
+                }
+                cb.black[blackpiecenewpos] = Object.assign(cb.black[blackpieceoriginalpos]);
+                cb.black[blackpiecenewpos].y = parseInt(blackpiecenewpos.charAt(0));
+                cb.black[blackpiecenewpos].x = parseInt(blackpiecenewpos.charAt(2));
+                cb.black[blackpiecenewpos].drawny = parseInt(blackpiecenewpos.charAt(0)) * tile_size;
+                cb.black[blackpiecenewpos].drawnx = parseInt(blackpiecenewpos.charAt(2)) * tile_size;
+                delete cb.black[blackpieceoriginalpos];
+                cb.board[parseInt(blackpiecenewpos.charAt(0))][parseInt(blackpiecenewpos.charAt(2))] = cb.board[parseInt(blackpieceoriginalpos.charAt(0))][parseInt(blackpieceoriginalpos.charAt(2))];
+                cb.board[parseInt(blackpieceoriginalpos.charAt(0))][parseInt(blackpieceoriginalpos.charAt(2))] = 0;
+                break;
+
+            }
+        }
     }
     
     /**
@@ -438,13 +571,13 @@ class chessboard {
                 //got player color piece, find all possible legal moves with that piece and calculate the score of both black and white.
                 //console.table(currentstate);
                 //console.log(currentstate[j][i]);
-                console.log(currentstate[j][i]);
+                //console.log(currentstate[j][i]);
                 //console.table(move_list[0]);
                 //console.table(move_list[1]);
                 var minj, maxj, mini, maxi, tempj, tempi; //maximum     
                 switch(currentstate[j][i].charAt(1)){
                     case "G": //king
-                        console.log("hit king");
+                        //console.log("hit king");
                         minj = j - 1 > 0 ? j-1 : 0;
                         maxj =  j + 1 < 8 ? j + 1 : 7;
                         mini = i - 1 > 0 ? i-1 : 0;
@@ -481,7 +614,7 @@ class chessboard {
                         maxj =  j + 1 < 8 ? j + 1 : 7;
                         mini = i - 1 > 0 ? i-1 : 0;
                         maxi =  i + 1 < 8 ? i + 1 : 7;
-                        console.log(minj,mini,maxj,maxi);
+                        //console.log(minj,mini,maxj,maxi);
                         for(tempj = minj; tempj <= maxj; tempj++){
                             for(tempi = mini; tempi <= maxi; tempi++){
                                 if(tempj == j && tempi == i) continue;
@@ -489,8 +622,8 @@ class chessboard {
                                 canmovefurther.push(true);
                             }
                         }
-                        console.log(queenmovelist);
-                        console.log(canmovefurther);
+                        //console.log(queenmovelist);
+                        //console.log(canmovefurther);
                         while(canmovefurther.includes(true)){
                             //so long as the queen can move further, check each direction
                             for(var qm = 0; qm < queenmovelist.length; qm++){
@@ -620,7 +753,7 @@ class chessboard {
                         maxj =  j + 2 < 8 ? j + 2 : 7;
                         mini = i - 2 > 0 ? i-2 : 0;
                         maxi =  i + 2 < 8 ? i + 2 : 7;
-                        console.log(minj,mini,maxj,maxi);
+                        //console.log(minj,mini,maxj,maxi);
                         var diffj, diffi;
                         for(tempj = minj; tempj <= maxj; tempj++){
                             for(tempi = mini; tempi <= maxi; tempi++){
@@ -671,14 +804,20 @@ class chessboard {
                             }
                         }
                         //check a few things:
-                        //1. move 1 or 2 forward to an empty space
+                        //1. move 1 or 2 forward to an empty space (make sure that no one is blocking)
                         //2. take forward left or take forward right
                         //3. empassant
+                        var forwardmove = true
                         for(tempj = minj; tempj <= maxj; tempj++){
-                            if(currentstate[tempj][i] == 0){
+                            if(currentstate[tempj][i] == 0 && forwardmove){
                                 move_list[0].push(this.createstate(currentstate,[j,i],[tempj,i]));
                                 move_list[1].push(totalscore);
                             }
+                            else{
+                                //postion directly forward it blocked, so don't bother checking.
+                                forwardmove = false;
+                            }
+                            //console.log(forwardmove);
                         }
                         if(i != 0){
                             if(currentstate[j][i].charAt(0) == "W"){

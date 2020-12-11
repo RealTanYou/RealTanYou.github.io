@@ -202,6 +202,7 @@ function releasepiece(event){ //for mouse up
   selectedpiecey = -1;
   selectedpiecex = -1;
   selectedpiececolor = "";
+  /*
   if(currentplayer == "white"){
     currentplayer = "black";
     cb.blackenpassant = "";
@@ -209,12 +210,16 @@ function releasepiece(event){ //for mouse up
   else{
     currentplayer = "white";
     cb.whiteenpassant = "";
-  }
+  }*/
+  cb.blackenpassant = "";
+  cb.whiteenpassant = "";
   draw();
   cb.print_board();
-  if(currentplayer == "black"){
-    cb.bestmove("B");
-  }
+  //if(currentplayer == "black"){
+    cb.bestmove("B",4);
+  //}
+  draw();
+  cb.print_board();
 }
 
 function returnpiecetoOriginal(event){ //if the piece moves out of the canvas, return the piece to its original location.
